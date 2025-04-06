@@ -1,51 +1,20 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html>
 <head>
     <meta charset="UTF-8">
     <title>費用查詢系統</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 30px;
-        }
-        form {
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            padding: 8px;
-            width: 200px;
-            font-size: 16px;
-        }
-        button {
-            padding: 8px 16px;
-            font-size: 16px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #aaa;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #eee;
-        }
-    </style>
 </head>
 <body>
     <h1>費用查詢系統</h1>
     <form method="post">
         <label for="name">請輸入姓名：</label>
-        <input type="text" name="name" id="name" required>
+        <input type="text" id="name" name="name">
         <button type="submit">查詢</button>
     </form>
 
     {% if results %}
         <h2>查詢結果</h2>
-        <table>
+        <table border="1">
             <thead>
                 <tr>
                     <th>類別</th>
@@ -53,22 +22,46 @@
                     <th>費用</th>
                     <th>看護費</th>
                     <th>車資</th>
-                    
-                
                 </tr>
             </thead>
             <tbody>
-                {% for row in results %}
+                {% for row in results.itertuples() %}
                 <tr>
-                    {% for item in row %}
-                    <td>{{ item }}</td>
-                    {% endfor %}
+                    <td>{{ row.類別 }}</td>
+                    <td>{{ row.項目 }}</td>
+                    <td>{{ row.費用 }}</td>
+                    <td>{{ row.看護費 }}</td>
+                    <td>{{ row.車資 }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-    {% elif request.method == "POST" %}
-        <p style="color: red;">查無資料，請確認輸入的姓名是否正確。</p>
+    {% endif %}
+
+    {% if roster_info %}
+        <h2>月費相關資料</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>月費</th>
+                    <th>補助款</th>
+                    <th>雜費</th>
+                    <th>積欠</th>
+                    <th>溢收</th>
+                    <th>合計</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ roster_info["月費"] }}</td>
+                    <td>{{ roster_info["補助款"] }}</td>
+                    <td>{{ roster_info["雜費"] }}</td>
+                    <td>{{ roster_info["積欠"] }}</td>
+                    <td>{{ roster_info["溢收"] }}</td>
+                    <td>{{ roster_info["合計"] }}</td>
+                </tr>
+            </tbody>
+        </table>
     {% endif %}
 </body>
 </html>
