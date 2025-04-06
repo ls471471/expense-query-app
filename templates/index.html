@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <title>費用查詢系統</title>
@@ -8,13 +8,13 @@
     <h1>費用查詢系統</h1>
     <form method="post">
         <label for="name">請輸入姓名：</label>
-        <input type="text" id="name" name="name">
+        <input type="text" id="name" name="name" required>
         <button type="submit">查詢</button>
     </form>
 
-    {% if results is not none and not results.empty %}
+    {% if results is not none %}
         <h2>查詢結果</h2>
-        <table border="1">
+        <table border="1" cellpadding="5" cellspacing="0">
             <thead>
                 <tr>
                     <th>類別</th>
@@ -25,24 +25,22 @@
                 </tr>
             </thead>
             <tbody>
-                {% for row in results.itertuples() %}
+                {% for index, row in results.iterrows() %}
                 <tr>
-                    <td>{{ row.類別 }}</td>
-                    <td>{{ getattr(row, '日期&項目') }}</td>
-                    <td>{{ row.費用 }}</td>
-                    <td>{{ row.看護費 }}</td>
-                    <td>{{ row.車資 }}</td>
+                    <td>{{ row['類別'] }}</td>
+                    <td>{{ row['日期&項目'] }}</td>
+                    <td>{{ row['費用'] }}</td>
+                    <td>{{ row['看護費'] }}</td>
+                    <td>{{ row['車資'] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-    {% elif results is not none %}
-        <p>查無資料</p>
     {% endif %}
 
-    {% if roster_info %}
+    {% if summary is not none %}
         <h2>月費相關資料</h2>
-        <table border="1">
+        <table border="1" cellpadding="5" cellspacing="0">
             <thead>
                 <tr>
                     <th>月費</th>
@@ -55,12 +53,12 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>{{ roster_info["月費"] }}</td>
-                    <td>{{ roster_info["補助款"] }}</td>
-                    <td>{{ roster_info["雜費"] }}</td>
-                    <td>{{ roster_info["積欠"] }}</td>
-                    <td>{{ roster_info["溢收"] }}</td>
-                    <td>{{ roster_info["合計"] }}</td>
+                    <td>{{ summary['月費'] }}</td>
+                    <td>{{ summary['補助款'] }}</td>
+                    <td>{{ summary['雜費'] }}</td>
+                    <td>{{ summary['積欠'] }}</td>
+                    <td>{{ summary['溢收'] }}</td>
+                    <td>{{ summary['合計'] }}</td>
                 </tr>
             </tbody>
         </table>
