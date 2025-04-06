@@ -12,6 +12,11 @@
         <button type="submit">查詢</button>
     </form>
 
+    <!-- ✅ 顯示查無資料的訊息 -->
+    {% if message %}
+        <p style="color: red;">{{ message }}</p>
+    {% endif %}
+
     {% if results %}
         <h2>查詢結果</h2>
         <table border="1">
