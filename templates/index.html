@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>費用查詢系統</title>
+</head>
+<body>
+    <h1>安養院費用查詢</h1>
+    <form method="POST">
+        <label for="name">輸入姓名：</label>
+        <input type="text" name="name" required>
+        <button type="submit">查詢</button>
+    </form>
+
+    {% if results %}
+        <h2>查詢結果：</h2>
+        <table border="1">
+            <tr>
+                <th>日期</th><th>項目</th><th>數量</th><th>單價</th><th>單位</th><th>金額</th><th>備註</th>
+            </tr>
+            {% for row in results %}
+                <tr>
+                {% for item in row %}
+                    <td>{{ item }}</td>
+                {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+</body>
+</html>
