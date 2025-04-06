@@ -7,6 +7,7 @@ app = Flask(__name__)
 # 載入 Excel 各分頁資料
 df_detail = pd.read_excel("data.xlsx", sheet_name="整合")
 df_roster = pd.read_excel("data.xlsx", sheet_name="名冊")
+df_roster.columns = df_roster.columns.str.strip()  # 移除欄位名稱空白
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -18,12 +19,12 @@ def index():
         name = request.form["name"].strip()  # 去除前後空白
         filtered = df_detail[df_detail["姓名"] == name]
 
-        # 處理費用明細資料
+        # 費用明細資料
         if not filtered.empty:
             results = filtered[["類別", "日期&項目", "費用", "看護費", "車資"]]
             results = results.fillna("-")
 
-        # 處理名冊資料（取第一筆符合者）
+        # 名冊資料
         filtered_roster = df_roster[df_roster["姓名"] == name]
         if not filtered_roster.empty:
             row = filtered_roster.iloc[0]
@@ -36,13 +37,8 @@ def index():
                 "合計": row.get("合計", "-")
             }
 
-        # 如果兩邊都找不到
         if results is None and roster_info is None:
             message = f"查無姓名「{name}」的資料，請確認輸入正確。"
-
-    # 除錯用：Log 顯示目前變數內容
-    print("🟡 results =", results)
-    print("🟢 roster_info =", roster_info)
 
     return render_template("index.html", results=results, roster_info=roster_info, message=message)
 
