@@ -12,12 +12,7 @@
         <button type="submit">查詢</button>
     </form>
 
-    <!-- ✅ 顯示查無資料的訊息 -->
-    {% if message %}
-        <p style="color: red;">{{ message }}</p>
-    {% endif %}
-
-    {% if results %}
+    {% if results is not none and not results.empty %}
         <h2>查詢結果</h2>
         <table border="1">
             <thead>
@@ -33,7 +28,7 @@
                 {% for row in results.itertuples() %}
                 <tr>
                     <td>{{ row.類別 }}</td>
-                    <td>{{ row["日期&項目"] }}</td>
+                    <td>{{ row.項目 }}</td>
                     <td>{{ row.費用 }}</td>
                     <td>{{ row.看護費 }}</td>
                     <td>{{ row.車資 }}</td>
@@ -41,6 +36,8 @@
                 {% endfor %}
             </tbody>
         </table>
+    {% elif results is not none %}
+        <p>查無資料</p>
     {% endif %}
 
     {% if roster_info %}
