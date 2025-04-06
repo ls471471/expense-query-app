@@ -20,7 +20,7 @@ def index():
 
         # 處理費用明細資料
         if not filtered.empty:
-            results = filtered[["類別", "項目", "費用", "看護費", "車資"]]
+            results = filtered[["類別", "日期&項目", "費用", "看護費", "車資"]]
             results = results.fillna("-")
 
         # 處理名冊資料（取第一筆符合者）
