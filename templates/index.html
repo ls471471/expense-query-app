@@ -38,7 +38,7 @@
         </table>
     {% endif %}
 
-    {% if summary is defined and summary is not none %}
+    {% if roster_info %}
         <h2>月費相關資料</h2>
         <table border="1" cellpadding="5" cellspacing="0">
             <thead>
@@ -53,15 +53,19 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>{{ summary['月費'] }}</td>
-                    <td>{{ summary['補助款'] }}</td>
-                    <td>{{ summary['雜費'] }}</td>
-                    <td>{{ summary['積欠'] }}</td>
-                    <td>{{ summary['溢收'] }}</td>
-                    <td>{{ summary['合計'] }}</td>
+                    <td>{{ roster_info['月費'] }}</td>
+                    <td>{{ roster_info['補助款'] }}</td>
+                    <td>{{ roster_info['雜費'] }}</td>
+                    <td>{{ roster_info['積欠'] }}</td>
+                    <td>{{ roster_info['溢收'] }}</td>
+                    <td>{{ roster_info['合計'] }}</td>
                 </tr>
             </tbody>
         </table>
+    {% endif %}
+
+    {% if message %}
+        <p style="color: red;">{{ message }}</p>
     {% endif %}
 </body>
 </html>
