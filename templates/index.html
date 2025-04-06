@@ -33,7 +33,7 @@
                 {% for row in results.itertuples() %}
                 <tr>
                     <td>{{ row.類別 }}</td>
-                    <td>{{ row.日期&項目 }}</td>
+                    <td>{{ row["日期&項目"] }}</td>
                     <td>{{ row.費用 }}</td>
                     <td>{{ row.看護費 }}</td>
                     <td>{{ row.車資 }}</td>
