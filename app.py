@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, request
 import pandas as pd
 
@@ -16,7 +17,3 @@ def index():
             if not filtered.empty:
                 results = filtered[["日期", "項目", "數量", "單價", "單位", "金額", "備註"]].values.tolist()
     return render_template("index.html", results=results)
-
-if __name__ == "__main__":
-    app.run()
-
