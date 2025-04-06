@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 import pandas as pd
-import os  # ✅ 加在這裡
+import os
 
 app = Flask(__name__)
 
@@ -12,9 +12,10 @@ df_roster = pd.read_excel("data.xlsx", sheet_name="名冊")
 def index():
     results = None
     roster_info = None
+    message = None
 
     if request.method == "POST":
-        name = request.form["name"]
+        name = request.form["name"].strip()  # 去除前後空白
         filtered = df_detail[df_detail["姓名"] == name]
 
         # 處理費用明細資料
@@ -35,9 +36,16 @@ def index():
                 "合計": row.get("合計", "-")
             }
 
-    return render_template("index.html", results=results, roster_info=roster_info)
+        # 如果兩邊都找不到
+        if results is None and roster_info is None:
+            message = f"查無姓名「{name}」的資料，請確認輸入正確。"
 
+    # 除錯用：Log 顯示目前變數內容
+    print("🟡 results =", results)
+    print("🟢 roster_info =", roster_info)
+
+    return render_template("index.html", results=results, roster_info=roster_info, message=message)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # 從環境變數讀取 PORT（Render 需要）
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
