@@ -16,7 +16,7 @@ def index():
             df = pd.read_excel(EXCEL_PATH, sheet_name="整合")
             filtered = df[df["姓名"] == name]
             if not filtered.empty:
-                results = filtered[["日期", "項目", "數量", "單價", "費用", "看護費", "車資"]].values.tolist()
+                results = filtered[["類別", "日期&項目", "費用", "看護費", "車資"]].values.tolist()
     return render_template("index.html", results=results, name=name)
 
 if __name__ == "__main__":
