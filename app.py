@@ -43,7 +43,8 @@ def index():
         if results is None and roster_info is None:
             message = f"查無姓名「{name}」的資料，請確認輸入正確。"
 
-    return render_template("index.html", results=results, roster_info=roster_info, message=message)
+    return render_template("index.html", results=results, roster_info=roster_info, message=message, name=name)
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
