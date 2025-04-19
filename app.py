@@ -16,6 +16,7 @@ def index():
     results = None
     roster_info = None
     message = None
+    name = None
 
     if request.method == "POST":
         name = request.form["name"].strip()  # 去除前後空白
