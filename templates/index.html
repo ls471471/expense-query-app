@@ -5,7 +5,8 @@
     <title>龍祥安養園區-月費查詢系統</title>
 </head>
 <body>
-    <h1>月費查詢系統</h1>
+    <h1>龍祥安養園區-月費查詢系統</h1>
+    <p style="color:red;">僅呈現當次月費，無法查詢之前月費內容，因此該月月費內容查詢後，請家屬自行截圖存檔，謝謝</p>
     <form method="post">
         <label for="name">請輸入個案姓名：</label>
         <input type="text" id="name" name="name" required>
@@ -65,7 +66,6 @@
     {% endif %}
 
     {% if message %}
-        <p style="color: red;">{{ message }}</p>
     {% endif %}
 </body>
 </html>
