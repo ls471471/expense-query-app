@@ -7,7 +7,12 @@ app = Flask(__name__)
 # 載入 Excel 各分頁資料
 df_detail = pd.read_excel("data.xlsx", sheet_name="整合")
 df_roster = pd.read_excel("data.xlsx", sheet_name="名冊")
-df_roster.columns = df_roster.columns.str.strip()  # 移除欄位名稱空白
+
+# 移除欄位名稱空白，統一姓名欄位格式為字串（防止數字型別）
+df_detail.columns = df_detail.columns.str.strip()
+df_roster.columns = df_roster.columns.str.strip()
+df_detail["姓名"] = df_detail["姓名"].astype(str).str.strip()
+df_roster["姓名"] = df_roster["姓名"].astype(str).str.strip()
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -19,7 +24,7 @@ def index():
     expense_summary = None
 
     if request.method == "POST":
-        name = request.form["name"].strip()
+        name = str(request.form["name"]).strip()  # 強制轉字串避免錯誤
         filtered = df_detail[df_detail["姓名"] == name]
 
         if not filtered.empty:
@@ -60,8 +65,7 @@ def index():
 
             # 類別為「沖銷」的退費（強制轉為正值）
             refund_df = filtered[filtered["類別"] == "沖銷"]
-            refund = refund_df["費用"].fillna(0).sum()
-            refund = abs(refund)
+            refund = abs(refund_df["費用"].fillna(0).sum())
             expense_summary["退費"] = refund
 
             # 雜費總計 = 小計 - 退費
