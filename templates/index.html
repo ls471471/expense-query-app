@@ -63,6 +63,40 @@
     {% if results is not none %}
         <h2>{{ custom_heading }}月費通知：</h2>
         <p>個案姓名：{{ name }}</p>
+
+        {% if roster_info %}
+            <h2>月費相關資料</h2>
+            <p style="color:red; font-size:16pt;">請依【合計】金額 繳納月費</p>
+            <table class="summary-table">
+                <tr>
+                    <th colspan="2" class="section-title">應收</th>
+                    <th colspan="2" class="section-title">應退</th>
+                </tr>
+                <tr>
+                    <td>月費</td>
+                    <td>{{ roster_info['月費']|int }}</td>
+                    <td>補助款</td>
+                    <td>{{ roster_info['補助款']|int }}</td>
+                </tr>
+                <tr>
+                    <td>尚欠</td>
+                    <td>{{ roster_info['積欠']|int }}</td>
+                    <td>溢收</td>
+                    <td>{{ roster_info['溢收']|int }}</td>
+                </tr>
+                <tr>
+                    <td>雜費</td>
+                    <td>{{ roster_info['雜費']|int }}</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="2" class="total-label">合計：</td>
+                    <td colspan="2" class="total-value">{{ roster_info['合計']|int }} 元</td>
+                </tr>
+            </table>
+        {% endif %}
+
         <p style="color:red; font-size:14pt;">雜費明細列表</p>
         <table class="summary-table">
             <thead>
@@ -79,45 +113,12 @@
                 <tr>
                     <td>{{ row['類別'] }}</td>
                     <td>{{ row['日期&項目'] }}</td>
-                    <td>{{ row['費用'] }}</td>
-                    <td>{{ row['看護費'] }}</td>
-                    <td>{{ row['車資'] }}</td>
+                    <td>{{ row['費用']|int }}</td>
+                    <td>{{ row['看護費']|int }}</td>
+                    <td>{{ row['車資']|int }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
-        </table>
-    {% endif %}
-
-    {% if roster_info %}
-        <h2>月費相關資料</h2>
-        <p style="color:red; font-size:16pt;">請依【合計】金額 繳納月費</p>
-        <table class="summary-table">
-            <tr>
-                <th colspan="2" class="section-title">應收</th>
-                <th colspan="2" class="section-title">應退</th>
-            </tr>
-            <tr>
-                <td>月費</td>
-                <td>{{ roster_info['月費'] }}</td>
-                <td>補助款</td>
-                <td>{{ roster_info['補助款'] }}</td>
-            </tr>
-            <tr>
-                <td>尚欠</td>
-                <td>{{ roster_info['積欠'] }}</td>
-                <td>溢收</td>
-                <td>{{ roster_info['溢收'] }}</td>
-            </tr>
-            <tr>
-                <td>雜費</td>
-                <td>{{ roster_info['雜費'] }}</td>
-                <td></td>
-                <td></td>
-            </tr>
-            <tr class="total-row">
-                <td colspan="2" class="total-label">合計：</td>
-                <td colspan="2" class="total-value">{{ roster_info['合計'] }} 元</td>
-            </tr>
         </table>
     {% endif %}
 
@@ -128,16 +129,16 @@
                 <tr><th>項目</th><th>合計</th></tr>
             </thead>
             <tbody>
-                <tr><td>醫療費</td><td>{{ expense_summary['醫療'] }}</td></tr>
-                <tr><td>看護費</td><td>{{ expense_summary['看護費'] }}</td></tr>
-                <tr><td>車資</td><td>{{ expense_summary['車資'] }}</td></tr>
-                <tr><td>耗材</td><td>{{ expense_summary['耗材'] }}</td></tr>
-                <tr><td>其他</td><td>{{ expense_summary['其他'] }}</td></tr>
-                <tr><td>農會購物</td><td>{{ expense_summary['農會購物'] }}</td></tr>
-                <tr><td style="text-align:right; color:blue;">雜費小計</td><td style="color:blue;">{{ expense_summary['雜費小計'] }} 元</td></tr>
-                <tr><td style="text-align:right;">沖銷(退費)</td><td>({{ expense_summary['退費'] }})</td></tr>
+                <tr><td>醫療費</td><td>{{ expense_summary['醫療']|int }}</td></tr>
+                <tr><td>看護費</td><td>{{ expense_summary['看護費']|int }}</td></tr>
+                <tr><td>車資</td><td>{{ expense_summary['車資']|int }}</td></tr>
+                <tr><td>耗材</td><td>{{ expense_summary['耗材']|int }}</td></tr>
+                <tr><td>其他</td><td>{{ expense_summary['其他']|int }}</td></tr>
+                <tr><td>農會購物</td><td>{{ expense_summary['農會購物']|int }}</td></tr>
+                <tr><td style="text-align:right; color:blue;">雜費小計</td><td style="color:blue;">{{ expense_summary['雜費小計']|int }} 元</td></tr>
+                <tr><td style="text-align:right;">沖銷(退費)</td><td>({{ expense_summary['退費']|int }})</td></tr>
                 <tr class="total-row">
-                    <td colspan="2">雜費總計 {{ expense_summary['雜費總計'] }} 元</td>
+                    <td colspan="2">雜費總計 {{ expense_summary['雜費總計']|int }} 元</td>
                 </tr>
             </tbody>
         </table>
