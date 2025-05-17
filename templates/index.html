@@ -54,29 +54,28 @@
         <h2>{{ custom_heading }}月費通知：</h2>
         <p>個案姓名：{{ name }}</p>
         <p style="color:red; font-size:14pt;">雜費明細列表</p>
-<table class="summary-table">
-    <thead>
-        <tr>
-            <th>類別</th>
-            <th>日期&項目</th>
-            <th>費用</th>
-            <th>看護費</th>
-            <th>車資</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for index, row in results.iterrows() %}
-        <tr>
-            <td>{{ row['類別'] }}</td>
-            <td>{{ row['日期&項目'] }}</td>
-            <td>{{ row['費用'] }}</td>
-            <td>{{ row['看護費'] }}</td>
-            <td>{{ row['車資'] }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
+        <table border="1" cellpadding="5" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>類別</th>
+                    <th>日期&項目</th>
+                    <th>費用</th>
+                    <th>看護費</th>
+                    <th>車資</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for index, row in results.iterrows() %}
+                <tr>
+                    <td>{{ row['類別'] }}</td>
+                    <td>{{ row['日期&項目'] }}</td>
+                    <td>{{ row['費用'] }}</td>
+                    <td>{{ row['看護費'] }}</td>
+                    <td>{{ row['車資'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% endif %}
 
     {% if roster_info %}
@@ -119,7 +118,7 @@
                 <tr><th>項目</th><th>合計</th></tr>
             </thead>
             <tbody>
-                <tr><td>醫療費</td><td>{{ expense_summary['醫療費'] }}</td></tr>
+                <tr><td>醫療費</td><td>{{ expense_summary['醫療'] }}</td></tr>
                 <tr><td>看護費</td><td>{{ expense_summary['看護費'] }}</td></tr>
                 <tr><td>車資</td><td>{{ expense_summary['車資'] }}</td></tr>
                 <tr><td>耗材</td><td>{{ expense_summary['耗材'] }}</td></tr>
