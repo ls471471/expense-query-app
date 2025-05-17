@@ -20,6 +20,7 @@ def index():
     total_misc = 0
     custom_heading = ""
     name = ""
+    expense_summary = None
 
     if request.method == "POST":
         name = request.form["name"].strip()  # 去除前後空白
@@ -44,6 +45,19 @@ def index():
             refund = filtered.loc[filtered["類別"] == "沖銷(退費)", "費用"].fillna(0).sum()
             total_misc = subtotal - refund
 
+            # 將統計結果包裝成 expense_summary 傳到前端
+            expense_summary = {
+                "醫療費": int(summary.get("醫療費", 0)),
+                "看護費": int(summary.get("看護費", 0)),
+                "車資": int(summary.get("車資", 0)),
+                "耗材": int(summary.get("耗材", 0)),
+                "其他": int(summary.get("其他", 0)),
+                "農會購物": int(summary.get("農會購物", 0)),
+                "雜費小計": int(subtotal),
+                "退費": int(refund),
+                "雜費總計": int(total_misc)
+            }
+
         filtered_roster = df_roster[df_roster["姓名"] == name]
         if not filtered_roster.empty:
             row = filtered_roster.iloc[0]
@@ -60,9 +74,13 @@ def index():
         if results is None and roster_info is None:
             message = f"查無姓名「{name}」的資料，請確認輸入正確。"
 
-    return render_template("index.html", name=name, results=results, roster_info=roster_info,
-                           message=message, summary=summary, subtotal=subtotal,
-                           refund=refund, total_misc=total_misc, custom_heading=custom_heading)
+    return render_template("index.html",
+                           name=name,
+                           results=results,
+                           roster_info=roster_info,
+                           message=message,
+                           expense_summary=expense_summary,
+                           custom_heading=custom_heading)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
