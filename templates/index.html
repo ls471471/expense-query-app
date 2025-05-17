@@ -9,6 +9,7 @@
             margin: 20px auto;
             border-collapse: collapse;
             font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+            font-size: 14pt;
         }
 
         .summary-table th,
@@ -16,6 +17,15 @@
             border: 1px solid #999;
             padding: 10px;
             text-align: center;
+        }
+
+        .summary-table thead th {
+            background-color: #d9d9d9;
+            font-weight: bold;
+        }
+
+        .summary-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
 
         .summary-table .section-title {
@@ -54,7 +64,7 @@
         <h2>{{ custom_heading }}月費通知：</h2>
         <p>個案姓名：{{ name }}</p>
         <p style="color:red; font-size:14pt;">雜費明細列表</p>
-        <table border="1" cellpadding="5" cellspacing="0">
+        <table class="summary-table">
             <thead>
                 <tr>
                     <th>類別</th>
