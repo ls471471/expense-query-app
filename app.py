@@ -26,7 +26,7 @@ def index():
             results = filtered[["類別", "日期&項目", "費用", "看護費", "車資"]]
             results = results.fillna("-")
 
-            # 統計雜費：依照你的規則處理
+            # 統計雜費
             expense_summary = {}
 
             # 類別為「醫療」
@@ -47,7 +47,7 @@ def index():
             farmers = filtered[filtered["類別"] == "農會"]
             expense_summary["農會購物"] = farmers["費用"].fillna(0).sum()
 
-            # 雜費小計（六項加總）
+            # 雜費小計
             subtotal = sum([
                 expense_summary["醫療"],
                 expense_summary["看護費"],
@@ -58,15 +58,17 @@ def index():
             ])
             expense_summary["雜費小計"] = subtotal
 
-            # 類別為「沖銷」的退費
-            refund = filtered[filtered["類別"] == "沖銷"]["費用"].fillna(0).sum()
+            # 類別為「沖銷」的退費（強制轉為正值）
+            refund_df = filtered[filtered["類別"] == "沖銷"]
+            refund = refund_df["費用"].fillna(0).sum()
+            refund = abs(refund)
             expense_summary["退費"] = refund
 
-            # 雜費總計
+            # 雜費總計 = 小計 - 退費
             total_misc = subtotal - refund
             expense_summary["雜費總計"] = total_misc
 
-            # 四捨五入轉為整數
+            # 所有金額轉為整數
             for key in expense_summary:
                 expense_summary[key] = int(round(expense_summary[key]))
 
@@ -98,4 +100,5 @@ def index():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
