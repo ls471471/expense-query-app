@@ -13,41 +13,37 @@ df_roster.columns = df_roster.columns.str.strip()  # 移除欄位名稱空白
 def index():
     results = None
     roster_info = None
-    expense_summary = None
     message = None
+    summary = None
+    subtotal = 0
+    refund = 0
+    total_misc = 0
+    custom_heading = ""
+    name = ""
 
     if request.method == "POST":
         name = request.form["name"].strip()  # 去除前後空白
         filtered = df_detail[df_detail["姓名"] == name]
 
-        # 費用明細資料
         if not filtered.empty:
             results = filtered[["類別", "日期&項目", "費用", "看護費", "車資"]]
             results = results.fillna("-")
 
-            # 雜費分類統計
+            # 統計各類別金額
             categories = ["醫療費", "看護費", "車資", "耗材", "其他", "農會購物"]
-            expense_summary = {cat: 0 for cat in categories}
-            filtered_expense = filtered[filtered["類別"] == "雜費"]
+            summary = {}
+            for cat in categories:
+                if cat == "看護費":
+                    summary[cat] = filtered["看護費"].fillna(0).sum()
+                elif cat == "車資":
+                    summary[cat] = filtered["車資"].fillna(0).sum()
+                else:
+                    summary[cat] = filtered.loc[filtered["類別"] == cat, "費用"].fillna(0).sum()
 
-            for _, row in filtered_expense.iterrows():
-                item = str(row["日期&項目"]).strip()
-                amount = row.get("費用", 0) or 0
-                for cat in categories:
-                    if cat in item:
-                        expense_summary[cat] += amount
+            subtotal = sum(summary.values())
+            refund = filtered.loc[filtered["類別"] == "沖銷(退費)", "費用"].fillna(0).sum()
+            total_misc = subtotal - refund
 
-            subtotal = sum(expense_summary.values())
-            refund = filtered_expense[
-                filtered_expense["日期&項目"].str.contains("退費|沖銷", na=False)
-            ]["費用"].sum()
-
-            total = subtotal - refund
-            expense_summary["雜費小計"] = subtotal
-            expense_summary["退費"] = refund
-            expense_summary["雜費總計"] = total
-
-        # 名冊資料
         filtered_roster = df_roster[df_roster["姓名"] == name]
         if not filtered_roster.empty:
             row = filtered_roster.iloc[0]
@@ -59,11 +55,14 @@ def index():
                 "溢收": row.get("溢收", "-"),
                 "合計": row.get("合計", "-")
             }
+            custom_heading = row.get("月份", "")
 
         if results is None and roster_info is None:
             message = f"查無姓名「{name}」的資料，請確認輸入正確。"
 
-    return render_template("index.html", results=results, roster_info=roster_info, expense_summary=expense_summary, message=message)
+    return render_template("index.html", name=name, results=results, roster_info=roster_info,
+                           message=message, summary=summary, subtotal=subtotal,
+                           refund=refund, total_misc=total_misc, custom_heading=custom_heading)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
