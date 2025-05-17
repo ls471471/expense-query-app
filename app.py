@@ -14,50 +14,63 @@ def index():
     results = None
     roster_info = None
     message = None
-    summary = None
-    subtotal = 0
-    refund = 0
-    total_misc = 0
     custom_heading = ""
     name = ""
     expense_summary = None
 
     if request.method == "POST":
-        name = request.form["name"].strip()  # 去除前後空白
+        name = request.form["name"].strip()
         filtered = df_detail[df_detail["姓名"] == name]
 
         if not filtered.empty:
             results = filtered[["類別", "日期&項目", "費用", "看護費", "車資"]]
             results = results.fillna("-")
 
-            # 統計各類別金額
-            categories = ["醫療費", "看護費", "車資", "耗材", "其他", "農會購物"]
-            summary = {}
-            for cat in categories:
-                if cat == "看護費":
-                    summary[cat] = filtered["看護費"].fillna(0).sum()
-                elif cat == "車資":
-                    summary[cat] = filtered["車資"].fillna(0).sum()
-                else:
-                    summary[cat] = filtered.loc[filtered["類別"] == cat, "費用"].fillna(0).sum()
+            # 統計雜費：依照你的規則處理
+            expense_summary = {}
 
-            subtotal = sum(summary.values())
-            refund = filtered.loc[filtered["類別"] == "沖銷(退費)", "費用"].fillna(0).sum()
+            # 類別為「醫療」
+            medical = filtered[filtered["類別"] == "醫療"]
+            expense_summary["醫療"] = medical["費用"].fillna(0).sum()
+            expense_summary["看護費"] = medical["看護費"].fillna(0).sum()
+            expense_summary["車資"] = medical["車資"].fillna(0).sum()
+
+            # 類別為「耗材」
+            consumables = filtered[filtered["類別"] == "耗材"]
+            expense_summary["耗材"] = consumables["費用"].fillna(0).sum()
+
+            # 類別為「其他」
+            others = filtered[filtered["類別"] == "其他"]
+            expense_summary["其他"] = others["費用"].fillna(0).sum()
+
+            # 類別為「農會」
+            farmers = filtered[filtered["類別"] == "農會"]
+            expense_summary["農會購物"] = farmers["費用"].fillna(0).sum()
+
+            # 雜費小計（六項加總）
+            subtotal = sum([
+                expense_summary["醫療"],
+                expense_summary["看護費"],
+                expense_summary["車資"],
+                expense_summary["耗材"],
+                expense_summary["其他"],
+                expense_summary["農會購物"]
+            ])
+            expense_summary["雜費小計"] = subtotal
+
+            # 類別為「沖銷」的退費
+            refund = filtered[filtered["類別"] == "沖銷"]["費用"].fillna(0).sum()
+            expense_summary["退費"] = refund
+
+            # 雜費總計
             total_misc = subtotal - refund
+            expense_summary["雜費總計"] = total_misc
 
-            # 將統計結果包裝成 expense_summary 傳到前端
-            expense_summary = {
-                "醫療費": int(summary.get("醫療費", 0)),
-                "看護費": int(summary.get("看護費", 0)),
-                "車資": int(summary.get("車資", 0)),
-                "耗材": int(summary.get("耗材", 0)),
-                "其他": int(summary.get("其他", 0)),
-                "農會購物": int(summary.get("農會購物", 0)),
-                "雜費小計": int(subtotal),
-                "退費": int(refund),
-                "雜費總計": int(total_misc)
-            }
+            # 四捨五入轉為整數
+            for key in expense_summary:
+                expense_summary[key] = int(round(expense_summary[key]))
 
+        # 抓名冊資料
         filtered_roster = df_roster[df_roster["姓名"] == name]
         if not filtered_roster.empty:
             row = filtered_roster.iloc[0]
@@ -85,3 +98,4 @@ def index():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
