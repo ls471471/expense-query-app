@@ -60,6 +60,12 @@
         <button type="submit">查詢</button>
     </form>
 
+    {% if error_msg %}
+    <div style="color:red; white-space: pre-wrap; background:#fee; padding:10px; margin:10px 0;">
+      <strong>錯誤訊息 Debug:</strong><br>{{ error_msg }}
+    </div>
+    {% endif %}
+
     {% if results is not none %}
         <h2>{{ custom_heading }}月費通知：</h2>
         <p>個案姓名：{{ name }}</p>
@@ -97,7 +103,6 @@
             </table>
         {% endif %}
 
-        {% if results is not none %}
         <p style="color:red; font-size:14pt;">雜費明細列表</p>
         <table class="summary-table">
             <thead>
@@ -121,7 +126,6 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% endif %}
     {% endif %}
 
     {% if expense_summary %}
