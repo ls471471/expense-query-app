@@ -1,112 +1,90 @@
 from flask import Flask, render_template, request
 import pandas as pd
-import os
-import traceback  # 新增
 
 app = Flask(__name__)
 
-# 載入 Excel 各分頁資料
-df_detail = pd.read_excel("data.xlsx", sheet_name="整合")
-df_roster = pd.read_excel("data.xlsx", sheet_name="名冊")
+# 你的 Excel 檔案名稱
+EXCEL_FILE = 'data.xlsx'
 
-# 移除欄位名稱空白，統一姓名欄位格式為字串（防止數字型別）
-df_detail.columns = df_detail.columns.str.strip()
-df_roster.columns = df_roster.columns.str.strip()
-df_detail["姓名"] = df_detail["姓名"].astype(str).str.strip()
-df_roster["姓名"] = df_roster["姓名"].astype(str).str.strip()
-
-def safe_int_or_dash(x):
-    try:
-        return int(float(x))
-    except (ValueError, TypeError):
-        return "-"
-
-def to_int_or_zero(value):
-    if isinstance(value, (int, float)):
-        return int(value)
-    try:
-        return int(float(value))
-    except (ValueError, TypeError):
-        return 0
-
-@app.route("/", methods=["GET", "POST"])
+@app.route('/', methods=['GET', 'POST'])
 def index():
+    name = ''
     results = None
     roster_info = None
-    message = None
-    custom_heading = ""
-    name = ""
     expense_summary = None
-    error_msg = None  # 新增，用來顯示錯誤訊息於前端
+    message = ''
+    custom_heading = ''
 
-    try:
-        if request.method == "POST":
-            name = str(request.form["name"]).strip()
-            filtered = df_detail[df_detail["姓名"] == name]
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        if not name:
+            message = '請輸入姓名！'
+            return render_template('index.html', name=name, message=message)
 
-            if not filtered.empty:
-                num_cols = ["費用", "看護費", "車資"]
-                filtered[num_cols] = filtered[num_cols].fillna(0)
-                results = filtered[["類別", "日期&項目"] + num_cols].copy()
-                results[num_cols] = results[num_cols].astype(int)
+        try:
+            # 讀取 Excel 的兩個分頁
+            df_integrate = pd.read_excel(EXCEL_FILE, sheet_name='整合')
+            df_roster = pd.read_excel(EXCEL_FILE, sheet_name='名冊')
 
-                expense_summary = {}
+            # 篩選整合分頁的資料：找個案姓名
+            results = df_integrate[df_integrate['姓名'] == name]
 
-                expense_summary["醫療"] = to_int_or_zero(filtered[filtered["類別"] == "醫療"]["費用"].fillna(0).sum())
-                expense_summary["看護費"] = to_int_or_zero(filtered[filtered["類別"] == "醫療"]["看護費"].fillna(0).sum())
-                expense_summary["車資"] = to_int_or_zero(filtered[filtered["類別"] == "醫療"]["車資"].fillna(0).sum())
+            if results.empty:
+                message = f'找不到個案姓名：{name}'
+                return render_template('index.html', name=name, message=message)
 
-                expense_summary["耗材"] = to_int_or_zero(filtered[filtered["類別"] == "耗材"]["費用"].fillna(0).sum())
-                expense_summary["其他"] = to_int_or_zero(filtered[filtered["類別"] == "其他"]["費用"].fillna(0).sum())
-                expense_summary["農會購物"] = to_int_or_zero(filtered[filtered["類別"] == "農會"]["費用"].fillna(0).sum())
+            # 轉型前處理：將 '-' 替換成 '0'，再轉成數字型態，避免轉型錯誤
+            num_cols = ['費用', '看護費', '車資']  # 根據實際欄位名稱調整
+            for col in num_cols:
+                if col in results.columns:
+                    results[col] = results[col].astype(str).replace('-', '0')
+                    results[col] = pd.to_numeric(results[col], errors='coerce').fillna(0).astype(int)
 
-                subtotal = sum([
-                    expense_summary["醫療"],
-                    expense_summary["看護費"],
-                    expense_summary["車資"],
-                    expense_summary["耗材"],
-                    expense_summary["其他"],
-                    expense_summary["農會購物"]
-                ])
-                expense_summary["雜費小計"] = subtotal
-
-                refund = abs(filtered[filtered["類別"] == "沖銷"]["費用"].fillna(0).sum())
-                expense_summary["退費"] = to_int_or_zero(refund)
-
-                expense_summary["雜費總計"] = subtotal - expense_summary["退費"]
-
-            filtered_roster = df_roster[df_roster["姓名"] == name]
-            if not filtered_roster.empty:
-                row = filtered_roster.iloc[0]
+            # 篩選名冊分頁的個案資料
+            roster_filtered = df_roster[df_roster['姓名'] == name]
+            if not roster_filtered.empty:
+                # 假設名冊有這些欄位，取第一筆資料
                 roster_info = {
-                    "月費": safe_int_or_dash(row.get("月費")),
-                    "補助款": safe_int_or_dash(row.get("補助款")),
-                    "雜費": safe_int_or_dash(row.get("雜費")),
-                    "積欠": safe_int_or_dash(row.get("積欠")),
-                    "溢收": safe_int_or_dash(row.get("溢收")),
-                    "合計": safe_int_or_dash(row.get("合計")),
+                    '月費': roster_filtered.iloc[0].get('月費', 0),
+                    '補助款': roster_filtered.iloc[0].get('補助款', 0),
+                    '雜費': roster_filtered.iloc[0].get('雜費', 0),
+                    '積欠': roster_filtered.iloc[0].get('積欠', 0),
+                    '溢收': roster_filtered.iloc[0].get('溢收', 0),
+                    '合計': roster_filtered.iloc[0].get('合計', 0),
                 }
-                custom_heading = row.get("月份", "")
+            else:
+                roster_info = None
 
-            if results is None and roster_info is None:
-                message = f"查無姓名「{name}」的資料，請確認輸入正確。"
+            # 雜費統計（依類別分類加總）
+            expense_summary = {}
+            # 預設分類欄位，依照你 Excel 欄位調整
+            expense_categories = ['醫療', '看護費', '車資', '耗材', '其他', '農會購物', '退費']
 
-    except Exception as e:
-        error_msg = traceback.format_exc()
-        # 你也可以印到 server console 方便查錯
-        print("=== Exception traceback ===")
-        print(error_msg)
+            for cat in expense_categories:
+                if cat == '退費':
+                    # 沖銷退費加總：費用欄位為負值的和（或者你可用特定判斷）
+                    expense_summary[cat] = results.loc[results['類別'] == '沖銷', '費用'].sum()
+                else:
+                    expense_summary[cat] = results.loc[results['類別'] == cat, '費用'].sum()
 
-    return render_template("index.html",
+            # 雜費小計(不包含退費)
+            expense_summary['雜費小計'] = sum(expense_summary[cat] for cat in expense_categories if cat != '退費')
+            # 雜費總計 = 小計 - 退費
+            expense_summary['雜費總計'] = expense_summary['雜費小計'] + expense_summary.get('退費', 0)
+
+            custom_heading = '本月'  # 可依需求改動
+
+        except Exception as e:
+            message = f'發生錯誤：{e}'
+
+    return render_template('index.html',
                            name=name,
                            results=results,
                            roster_info=roster_info,
-                           message=message,
                            expense_summary=expense_summary,
-                           custom_heading=custom_heading,
-                           error_msg=error_msg)
+                           message=message,
+                           custom_heading=custom_heading)
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
 
+if __name__ == '__main__':
+    app.run(debug=True)
