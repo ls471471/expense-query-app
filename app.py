@@ -14,6 +14,13 @@ df_roster.columns = df_roster.columns.str.strip()
 df_detail["姓名"] = df_detail["姓名"].astype(str).str.strip()
 df_roster["姓名"] = df_roster["姓名"].astype(str).str.strip()
 
+# 安全轉換為整數的函數（遇到無法轉換的值則回傳 "-"）
+def safe_int_or_dash(x):
+    try:
+        return int(float(x))
+    except (ValueError, TypeError):
+        return "-"
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     results = None
@@ -24,35 +31,32 @@ def index():
     expense_summary = None
 
     if request.method == "POST":
-        name = str(request.form["name"]).strip()  # 強制轉字串避免錯誤
+        name = str(request.form["name"]).strip()
         filtered = df_detail[df_detail["姓名"] == name]
 
         if not filtered.empty:
-            results = filtered[["類別", "日期&項目", "費用", "看護費", "車資"]]
-            results = results.fillna("-")
+            num_cols = ["費用", "看護費", "車資"]
+            filtered[num_cols] = filtered[num_cols].fillna(0)
+            results = filtered[["類別", "日期&項目"] + num_cols].copy()
+            results[num_cols] = results[num_cols].astype(int)
 
             # 統計雜費
             expense_summary = {}
 
-            # 類別為「醫療」
             medical = filtered[filtered["類別"] == "醫療"]
             expense_summary["醫療"] = medical["費用"].fillna(0).sum()
             expense_summary["看護費"] = medical["看護費"].fillna(0).sum()
             expense_summary["車資"] = medical["車資"].fillna(0).sum()
 
-            # 類別為「耗材」
             consumables = filtered[filtered["類別"] == "耗材"]
             expense_summary["耗材"] = consumables["費用"].fillna(0).sum()
 
-            # 類別為「其他」
             others = filtered[filtered["類別"] == "其他"]
             expense_summary["其他"] = others["費用"].fillna(0).sum()
 
-            # 類別為「農會」
             farmers = filtered[filtered["類別"] == "農會"]
             expense_summary["農會購物"] = farmers["費用"].fillna(0).sum()
 
-            # 雜費小計
             subtotal = sum([
                 expense_summary["醫療"],
                 expense_summary["看護費"],
@@ -63,30 +67,26 @@ def index():
             ])
             expense_summary["雜費小計"] = subtotal
 
-            # 類別為「沖銷」的退費（強制轉為正值）
             refund_df = filtered[filtered["類別"] == "沖銷"]
             refund = abs(refund_df["費用"].fillna(0).sum())
             expense_summary["退費"] = refund
 
-            # 雜費總計 = 小計 - 退費
             total_misc = subtotal - refund
             expense_summary["雜費總計"] = total_misc
 
-            # 所有金額轉為整數
             for key in expense_summary:
                 expense_summary[key] = int(round(expense_summary[key]))
 
-        # 抓名冊資料
         filtered_roster = df_roster[df_roster["姓名"] == name]
         if not filtered_roster.empty:
             row = filtered_roster.iloc[0]
             roster_info = {
-                "月費": row.get("月費", "-"),
-                "補助款": row.get("補助款", "-"),
-                "雜費": row.get("雜費", "-"),
-                "積欠": row.get("積欠", "-"),
-                "溢收": row.get("溢收", "-"),
-                "合計": row.get("合計", "-")
+                "月費": safe_int_or_dash(row.get("月費")),
+                "補助款": safe_int_or_dash(row.get("補助款")),
+                "雜費": safe_int_or_dash(row.get("雜費")),
+                "積欠": safe_int_or_dash(row.get("積欠")),
+                "溢收": safe_int_or_dash(row.get("溢收")),
+                "合計": safe_int_or_dash(row.get("合計")),
             }
             custom_heading = row.get("月份", "")
 
@@ -104,5 +104,4 @@ def index():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
 
