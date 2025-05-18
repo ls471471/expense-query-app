@@ -82,12 +82,16 @@ def index():
             expense_summary["退費"] = int(refund["費用"].fillna(0).sum())
 
             # 雜費小計與總計
-            expense_summary['雜費小計'] = int(
-                expense_summary["醫療"]
-                + expense_summary["耗材"]
-                + expense_summary["其他"]
-                + expense_summary["農會購物"]
-            )
+# 雜費小計與總計（包含車資）
+expense_summary['雜費小計'] = int(
+    expense_summary["醫療"]
+    + expense_summary["看護費"]
+    + expense_summary["車資"]
+    + expense_summary["耗材"]
+    + expense_summary["其他"]
+    + expense_summary["農會購物"]
+)
+
             expense_summary['雜費總計'] = expense_summary['雜費小計'] + expense_summary.get("退費", 0)
 
             custom_heading = '本月'
