@@ -81,17 +81,15 @@ def index():
             refund = filtered[filtered["類別"] == "沖銷"]
             expense_summary["退費"] = int(refund["費用"].fillna(0).sum())
 
-            # 雜費小計與總計
-# 雜費小計與總計（包含車資）
-expense_summary['雜費小計'] = int(
-    expense_summary["醫療"]
-    + expense_summary["看護費"]
-    + expense_summary["車資"]
-    + expense_summary["耗材"]
-    + expense_summary["其他"]
-    + expense_summary["農會購物"]
-)
-
+            # 雜費小計與總計（加上看護費與車資）
+            expense_summary['雜費小計'] = int(
+                expense_summary["醫療"]
+                + expense_summary["看護費"]
+                + expense_summary["車資"]
+                + expense_summary["耗材"]
+                + expense_summary["其他"]
+                + expense_summary["農會購物"]
+            )
             expense_summary['雜費總計'] = expense_summary['雜費小計'] + expense_summary.get("退費", 0)
 
             custom_heading = '本月'
@@ -110,4 +108,5 @@ expense_summary['雜費小計'] = int(
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
 
