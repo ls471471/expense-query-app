@@ -2,168 +2,135 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>龍祥安養園區-月費查詢系統</title>
+    <title>費用查詢系統</title>
     <style>
-        .summary-table {
-            width: 90%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
-            font-size: 14pt;
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f4f4; }
+        h1 { color: #333; }
+        form { margin-bottom: 20px; }
+        input[type="text"] {
+            padding: 8px; width: 200px;
+            font-size: 16px;
         }
-
-        .summary-table th,
-        .summary-table td {
-            border: 1px solid #999;
-            padding: 10px;
+        input[type="submit"] {
+            padding: 8px 16px;
+            font-size: 16px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 40px;
+            background-color: #fff;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
             text-align: center;
         }
-
-        .summary-table thead th {
-            background-color: #d9d9d9;
+        th {
+            background-color: #eee;
+        }
+        .total-label {
             font-weight: bold;
-        }
-
-        .summary-table tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        .summary-table .section-title {
-            background-color: #d9d9d9;
-            font-weight: bold;
-        }
-
-        .summary-table .total-row td {
-            background-color: #fff9c4;
-            font-weight: bold;
-            font-size: 18px;
-            border: 1px solid #ccc;
-        }
-
-        .summary-table .total-label {
             text-align: right;
         }
-
-        .summary-table .total-value {
-            text-align: left;
-            color: #000;
+        .total-value {
+            font-weight: bold;
+            color: green;
+        }
+        .message {
+            color: red;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>龍祥安養園區-月費查詢系統</h1>
-    <p style="color:red;">僅呈現當次月費，無法查詢之前月費內容，因此該月月費內容查詢後，請家屬自行截圖存檔，謝謝</p>
-    <p style="color:blue; font-size:14pt;">如有月費相關疑問請來電 (分機217) 洽詢會計，謝謝</p>
+    <h1>費用查詢系統</h1>
+
     <form method="post">
-        <label for="name">請輸入個案姓名：</label>
-        <input type="text" id="name" name="name" required>
-        <button type="submit">查詢</button>
+        <label for="name">請輸入姓名：</label>
+        <input type="text" id="name" name="name" required value="{{ name }}">
+        <input type="submit" value="查詢">
     </form>
 
-    {% if results is not none %}
-        <h2>{{ custom_heading }}月費通知：</h2>
-        <p>個案姓名：{{ name }}</p>
+    {% if message %}
+        <p class="message">{{ message }}</p>
+    {% endif %}
 
-        {% if roster_info %}
-            <h2>月費相關資料</h2>
-            <p style="color:red; font-size:16pt;">請依【合計】金額 繳納月費</p>
-            <table class="summary-table">
-                <tr>
-                    <th colspan="2" class="section-title">應收</th>
-                    <th colspan="2" class="section-title">應退</th>
-                </tr>
-                <tr>
-                    <td>月費</td>
-                    <td>{{ roster_info['月費']|int }}</td>
-                    <td>補助款</td>
-                    <td>{{ roster_info['補助款']|int }}</td>
-                </tr>
-                <tr>
-                    <td>尚欠</td>
-                    <td>{{ roster_info['積欠']|int }}</td>
-                    <td>溢收</td>
-                    <td>{{ roster_info['溢收']|int }}</td>
-                </tr>
-                <tr>
-                    <td>雜費</td>
-                    <td>{{ roster_info['雜費']|int }}</td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr class="total-row">
-                    <td colspan="2" class="total-label">合計：</td>
-                    <td colspan="2" class="total-value">{{ roster_info['合計']|int }} 元</td>
-                </tr>
-            </table>
-        {% endif %}
+    {% if roster_info %}
+        <h2>{{ name }} 的月費資訊（{{ custom_heading }}）</h2>
+        <table>
+            <tr>
+                <td>月費</td>
+                <td>{{ roster_info['月費'] }}</td>
+                <td>補助款</td>
+                <td>{{ roster_info['補助款'] }}</td>
+            </tr>
+            <tr>
+                <td>尚欠</td>
+                <td>{{ roster_info['積欠'] }}</td>
+                <td>溢收</td>
+                <td>{{ roster_info['溢收'] }}</td>
+            </tr>
+            <tr>
+                <td>雜費</td>
+                <td>{{ roster_info['雜費'] }}</td>
+                <td colspan="2"></td>
+            </tr>
+            <tr>
+                <td colspan="2" class="total-label">合計：</td>
+                <td colspan="2" class="total-value">{{ roster_info['合計'] }} 元</td>
+            </tr>
+        </table>
+    {% endif %}
 
-        <p style="color:red; font-size:14pt;">雜費明細列表</p>
-        <table class="summary-table">
-            <thead>
-                <tr>
-                    <th>類別</th>
-                    <th>日期&項目</th>
-                    <th>費用</th>
-                    <th>看護費</th>
-                    <th>車資</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for index, row in results.iterrows() %}
+    {% if results %}
+        <h2>{{ name }} 的雜費明細</h2>
+        <table>
+            <tr>
+                <th>類別</th>
+                <th>日期&項目</th>
+                <th>費用</th>
+                <th>看護費</th>
+                <th>車資</th>
+            </tr>
+            {% for _, row in results.iterrows() %}
                 <tr>
                     <td>{{ row['類別'] }}</td>
                     <td>{{ row['日期&項目'] }}</td>
-                    <td>{{ row['費用']|int }}</td>
-                    <td>{{ row['看護費']|int }}</td>
-                    <td>{{ row['車資']|int }}</td>
+                    <td>{{ row['費用'] }}</td>
+                    <td>{{ row['看護費'] }}</td>
+                    <td>{{ row['車資'] }}</td>
                 </tr>
-                {% endfor %}
-            </tbody>
+            {% endfor %}
         </table>
     {% endif %}
 
     {% if expense_summary %}
-        <h2>本月雜費統計</h2>
-        <table class="summary-table">
-            <thead>
-                <tr><th>項目</th><th>合計</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>醫療費</td><td>{{ expense_summary['醫療']|int }}</td></tr>
-                <tr><td>看護費</td><td>{{ expense_summary['看護費']|int }}</td></tr>
-                <tr><td>車資</td><td>{{ expense_summary['車資']|int }}</td></tr>
-                <tr><td>耗材</td><td>{{ expense_summary['耗材']|int }}</td></tr>
-                <tr><td>其他</td><td>{{ expense_summary['其他']|int }}</td></tr>
-                <tr><td>農會購物</td><td>{{ expense_summary['農會購物']|int }}</td></tr>
-                <tr><td style="text-align:right; color:blue;">雜費小計</td><td style="color:blue;">{{ expense_summary['雜費小計']|int }} 元</td></tr>
-                <tr><td style="text-align:right;">沖銷(退費)</td><td>({{ expense_summary['退費']|int }})</td></tr>
-                <tr class="total-row">
-                    <td colspan="2">雜費總計 {{ expense_summary['雜費總計']|int }} 元</td>
-                </tr>
-            </tbody>
+        <h2>{{ name }} 的雜費統計</h2>
+        <table>
+            <tr>
+                <th>醫療</th>
+                <th>看護費</th>
+                <th>車資</th>
+                <th>耗材</th>
+                <th>其他</th>
+                <th>農會購物</th>
+                <th>雜費小計</th>
+                <th>退費</th>
+                <th colspan="2">雜費總計</th>
+            </tr>
+            <tr>
+                <td>{{ expense_summary['醫療'] }}</td>
+                <td>{{ expense_summary['看護費'] }}</td>
+                <td>{{ expense_summary['車資'] }}</td>
+                <td>{{ expense_summary['耗材'] }}</td>
+                <td>{{ expense_summary['其他'] }}</td>
+                <td>{{ expense_summary['農會購物'] }}</td>
+                <td style="color:blue;">{{ expense_summary['雜費小計'] }} 元</td>
+                <td>({{ expense_summary['退費'] }})</td>
+                <td colspan="2">{{ expense_summary['雜費總計'] }} 元</td>
+            </tr>
         </table>
     {% endif %}
-
-    {% if message %}
-        <p style="color:red;">{{ message }}</p>
-    {% endif %}
-
-    <!-- 轉帳資訊 -->
-    <hr>
-    <pre style="font-size:14pt; color:green;">
-轉帳與匯款帳號為：龍潭區農會 高平分部 - 金融機構代號：771-0045
-
-戶名：私立龍祥精神護理之家
-轉帳代號：771 或 600
-帳號：77104-01-0034950
-
-戶名：桃園市私立龍祥護理之家
-轉帳代號：771 或 600
-帳號：77104-01-0037997
-
-戶名：桃園市私立龍祥老人長期照顧中心(長期照護型)
-轉帳代號：771 或 600
-帳號：77104-01-0029306
-    </pre>
 </body>
 </html>
