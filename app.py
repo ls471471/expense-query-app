@@ -14,12 +14,12 @@ df_roster.columns = df_roster.columns.str.strip()
 df_detail["姓名"] = df_detail["姓名"].astype(str).str.strip()
 df_roster["姓名"] = df_roster["姓名"].astype(str).str.strip()
 
-# 安全轉換為整數的函數（遇到無法轉換的值則回傳 "-"）
-def safe_int_or_dash(x):
+# 安全轉換為整數（NaN、空字串、自訂錯誤都轉為 0）
+def safe_int(x):
     try:
         return int(float(x))
     except (ValueError, TypeError):
-        return "-"
+        return 0
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -36,9 +36,9 @@ def index():
 
         if not filtered.empty:
             num_cols = ["費用", "看護費", "車資"]
-            filtered[num_cols] = filtered[num_cols].fillna(0)
             results = filtered[["類別", "日期&項目"] + num_cols].copy()
-            results[num_cols] = results[num_cols].astype(int)
+            for col in num_cols:
+                results[col] = results[col].apply(safe_int)
 
             # 統計雜費
             expense_summary = {}
@@ -74,6 +74,7 @@ def index():
             total_misc = subtotal - refund
             expense_summary["雜費總計"] = total_misc
 
+            # 全部轉 int 顯示
             for key in expense_summary:
                 expense_summary[key] = int(round(expense_summary[key]))
 
@@ -81,14 +82,16 @@ def index():
         if not filtered_roster.empty:
             row = filtered_roster.iloc[0]
             roster_info = {
-                "月費": safe_int_or_dash(row.get("月費")),
-                "補助款": safe_int_or_dash(row.get("補助款")),
-                "雜費": safe_int_or_dash(row.get("雜費")),
-                "積欠": safe_int_or_dash(row.get("積欠")),
-                "溢收": safe_int_or_dash(row.get("溢收")),
-                "合計": safe_int_or_dash(row.get("合計")),
+                "月費": safe_int(row.get("月費")),
+                "補助款": safe_int(row.get("補助款")),
+                "雜費": safe_int(row.get("雜費")),
+                "積欠": safe_int(row.get("積欠")),
+                "溢收": safe_int(row.get("溢收")),
+                "合計": safe_int(row.get("合計")),
             }
             custom_heading = row.get("月份", "")
+        else:
+            roster_info = None
 
         if results is None and roster_info is None:
             message = f"查無姓名「{name}」的資料，請確認輸入正確。"
