@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 import pandas as pd
+import os
 
 app = Flask(__name__)
 
@@ -56,8 +57,6 @@ def index():
                     '溢收': row.get('溢收', 0),
                     '合計': row.get('合計', 0),
                 }
-            else:
-                roster_info = None
 
             # 雜費統計計算
             expense_summary = {}
@@ -86,5 +85,6 @@ def index():
                            custom_heading=custom_heading)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
 
