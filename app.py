@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 import pandas as pd
 import os
+import traceback  # 新增
 
 app = Flask(__name__)
 
@@ -14,14 +15,12 @@ df_roster.columns = df_roster.columns.str.strip()
 df_detail["姓名"] = df_detail["姓名"].astype(str).str.strip()
 df_roster["姓名"] = df_roster["姓名"].astype(str).str.strip()
 
-# 安全轉換為整數的函數（遇到無法轉換的值則回傳 "-"）
 def safe_int_or_dash(x):
     try:
         return int(float(x))
     except (ValueError, TypeError):
         return "-"
 
-# 將值轉成整數，失敗則回傳 0，避免計算時型態錯誤
 def to_int_or_zero(value):
     if isinstance(value, (int, float)):
         return int(value)
@@ -38,58 +37,65 @@ def index():
     custom_heading = ""
     name = ""
     expense_summary = None
+    error_msg = None  # 新增，用來顯示錯誤訊息於前端
 
-    if request.method == "POST":
-        name = str(request.form["name"]).strip()
-        filtered = df_detail[df_detail["姓名"] == name]
+    try:
+        if request.method == "POST":
+            name = str(request.form["name"]).strip()
+            filtered = df_detail[df_detail["姓名"] == name]
 
-        if not filtered.empty:
-            num_cols = ["費用", "看護費", "車資"]
-            filtered[num_cols] = filtered[num_cols].fillna(0)
-            results = filtered[["類別", "日期&項目"] + num_cols].copy()
-            results[num_cols] = results[num_cols].astype(int)
+            if not filtered.empty:
+                num_cols = ["費用", "看護費", "車資"]
+                filtered[num_cols] = filtered[num_cols].fillna(0)
+                results = filtered[["類別", "日期&項目"] + num_cols].copy()
+                results[num_cols] = results[num_cols].astype(int)
 
-            # 統計雜費
-            expense_summary = {}
+                expense_summary = {}
 
-            expense_summary["醫療"] = to_int_or_zero(filtered[filtered["類別"] == "醫療"]["費用"].fillna(0).sum())
-            expense_summary["看護費"] = to_int_or_zero(filtered[filtered["類別"] == "醫療"]["看護費"].fillna(0).sum())
-            expense_summary["車資"] = to_int_or_zero(filtered[filtered["類別"] == "醫療"]["車資"].fillna(0).sum())
+                expense_summary["醫療"] = to_int_or_zero(filtered[filtered["類別"] == "醫療"]["費用"].fillna(0).sum())
+                expense_summary["看護費"] = to_int_or_zero(filtered[filtered["類別"] == "醫療"]["看護費"].fillna(0).sum())
+                expense_summary["車資"] = to_int_or_zero(filtered[filtered["類別"] == "醫療"]["車資"].fillna(0).sum())
 
-            expense_summary["耗材"] = to_int_or_zero(filtered[filtered["類別"] == "耗材"]["費用"].fillna(0).sum())
-            expense_summary["其他"] = to_int_or_zero(filtered[filtered["類別"] == "其他"]["費用"].fillna(0).sum())
-            expense_summary["農會購物"] = to_int_or_zero(filtered[filtered["類別"] == "農會"]["費用"].fillna(0).sum())
+                expense_summary["耗材"] = to_int_or_zero(filtered[filtered["類別"] == "耗材"]["費用"].fillna(0).sum())
+                expense_summary["其他"] = to_int_or_zero(filtered[filtered["類別"] == "其他"]["費用"].fillna(0).sum())
+                expense_summary["農會購物"] = to_int_or_zero(filtered[filtered["類別"] == "農會"]["費用"].fillna(0).sum())
 
-            subtotal = sum([
-                expense_summary["醫療"],
-                expense_summary["看護費"],
-                expense_summary["車資"],
-                expense_summary["耗材"],
-                expense_summary["其他"],
-                expense_summary["農會購物"]
-            ])
-            expense_summary["雜費小計"] = subtotal
+                subtotal = sum([
+                    expense_summary["醫療"],
+                    expense_summary["看護費"],
+                    expense_summary["車資"],
+                    expense_summary["耗材"],
+                    expense_summary["其他"],
+                    expense_summary["農會購物"]
+                ])
+                expense_summary["雜費小計"] = subtotal
 
-            refund = abs(filtered[filtered["類別"] == "沖銷"]["費用"].fillna(0).sum())
-            expense_summary["退費"] = to_int_or_zero(refund)
+                refund = abs(filtered[filtered["類別"] == "沖銷"]["費用"].fillna(0).sum())
+                expense_summary["退費"] = to_int_or_zero(refund)
 
-            expense_summary["雜費總計"] = subtotal - expense_summary["退費"]
+                expense_summary["雜費總計"] = subtotal - expense_summary["退費"]
 
-        filtered_roster = df_roster[df_roster["姓名"] == name]
-        if not filtered_roster.empty:
-            row = filtered_roster.iloc[0]
-            roster_info = {
-                "月費": safe_int_or_dash(row.get("月費")),
-                "補助款": safe_int_or_dash(row.get("補助款")),
-                "雜費": safe_int_or_dash(row.get("雜費")),
-                "積欠": safe_int_or_dash(row.get("積欠")),
-                "溢收": safe_int_or_dash(row.get("溢收")),
-                "合計": safe_int_or_dash(row.get("合計")),
-            }
-            custom_heading = row.get("月份", "")
+            filtered_roster = df_roster[df_roster["姓名"] == name]
+            if not filtered_roster.empty:
+                row = filtered_roster.iloc[0]
+                roster_info = {
+                    "月費": safe_int_or_dash(row.get("月費")),
+                    "補助款": safe_int_or_dash(row.get("補助款")),
+                    "雜費": safe_int_or_dash(row.get("雜費")),
+                    "積欠": safe_int_or_dash(row.get("積欠")),
+                    "溢收": safe_int_or_dash(row.get("溢收")),
+                    "合計": safe_int_or_dash(row.get("合計")),
+                }
+                custom_heading = row.get("月份", "")
 
-        if results is None and roster_info is None:
-            message = f"查無姓名「{name}」的資料，請確認輸入正確。"
+            if results is None and roster_info is None:
+                message = f"查無姓名「{name}」的資料，請確認輸入正確。"
+
+    except Exception as e:
+        error_msg = traceback.format_exc()
+        # 你也可以印到 server console 方便查錯
+        print("=== Exception traceback ===")
+        print(error_msg)
 
     return render_template("index.html",
                            name=name,
@@ -97,7 +103,8 @@ def index():
                            roster_info=roster_info,
                            message=message,
                            expense_summary=expense_summary,
-                           custom_heading=custom_heading)
+                           custom_heading=custom_heading,
+                           error_msg=error_msg)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
