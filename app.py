@@ -26,34 +26,40 @@ def index():
             df_roster = pd.read_excel(EXCEL_FILE, sheet_name='名冊')
 
             # 篩選整合表中該姓名的資料
-            results = df_integrate[df_integrate['姓名'] == name]
+            results = df_integrate[df_integrate['姓名'] == name].copy()
 
             if results.empty:
                 message = f'找不到個案姓名：{name}'
                 return render_template('index.html', name=name, message=message)
 
-            # 數字欄位處理：將 '-' 轉為 0，轉型成 int
+            # 數字欄位處理
             num_cols = ['費用', '看護費', '車資']
             for col in num_cols:
                 if col in results.columns:
-                    results[col] = results[col].astype(str).replace('-', '0')
+                    results[col] = (
+                        results[col]
+                        .replace(['-', '－', '–', '', None], 0)
+                        .fillna(0)
+                        .apply(lambda x: 0 if str(x).strip() in ['-', '－', '–', ''] else x)
+                    )
                     results[col] = pd.to_numeric(results[col], errors='coerce').fillna(0).astype(int)
 
             # 讀取名冊資料
             roster_filtered = df_roster[df_roster['姓名'] == name]
             if not roster_filtered.empty:
+                row = roster_filtered.iloc[0]
                 roster_info = {
-                    '月費': roster_filtered.iloc[0].get('月費', 0),
-                    '補助款': roster_filtered.iloc[0].get('補助款', 0),
-                    '雜費': roster_filtered.iloc[0].get('雜費', 0),
-                    '積欠': roster_filtered.iloc[0].get('積欠', 0),
-                    '溢收': roster_filtered.iloc[0].get('溢收', 0),
-                    '合計': roster_filtered.iloc[0].get('合計', 0),
+                    '月費': row.get('月費', 0),
+                    '補助款': row.get('補助款', 0),
+                    '雜費': row.get('雜費', 0),
+                    '積欠': row.get('積欠', 0),
+                    '溢收': row.get('溢收', 0),
+                    '合計': row.get('合計', 0),
                 }
             else:
                 roster_info = None
 
-            # 計算雜費統計
+            # 雜費統計計算
             expense_summary = {}
             expense_categories = ['醫療', '看護費', '車資', '耗材', '其他', '農會購物', '退費']
 
