@@ -27,49 +27,68 @@ def index():
             df_roster = pd.read_excel(EXCEL_FILE, sheet_name='名冊')
 
             # 篩選整合表中該姓名的資料
-            results = df_integrate[df_integrate['姓名'] == name].copy()
+            filtered = df_integrate[df_integrate['姓名'] == name].copy()
 
-            if results.empty:
+            if filtered.empty:
                 message = f'找不到個案姓名：{name}'
                 return render_template('index.html', name=name, message=message)
 
             # 數字欄位處理
             num_cols = ['費用', '看護費', '車資']
             for col in num_cols:
-                if col in results.columns:
-                    results[col] = (
-                        results[col]
+                if col in filtered.columns:
+                    filtered[col] = (
+                        filtered[col]
                         .replace(['-', '－', '–', '', None], 0)
                         .fillna(0)
                         .apply(lambda x: 0 if str(x).strip() in ['-', '－', '–', ''] else x)
                     )
-                    results[col] = pd.to_numeric(results[col], errors='coerce').fillna(0).astype(int)
+                    filtered[col] = pd.to_numeric(filtered[col], errors='coerce').fillna(0).astype(int)
 
-            # 讀取名冊資料
+            # 顯示欄位
+            results = filtered[["類別", "日期&項目", "費用", "看護費", "車資"]].copy()
+
+            # 讀取名冊資料，並轉為整數
             roster_filtered = df_roster[df_roster['姓名'] == name]
             if not roster_filtered.empty:
                 row = roster_filtered.iloc[0]
                 roster_info = {
-                    '月費': row.get('月費', 0),
-                    '補助款': row.get('補助款', 0),
-                    '雜費': row.get('雜費', 0),
-                    '積欠': row.get('積欠', 0),
-                    '溢收': row.get('溢收', 0),
-                    '合計': row.get('合計', 0),
+                    '月費': int(row.get('月費', 0) or 0),
+                    '補助款': int(row.get('補助款', 0) or 0),
+                    '雜費': int(row.get('雜費', 0) or 0),
+                    '積欠': int(row.get('積欠', 0) or 0),
+                    '溢收': int(row.get('溢收', 0) or 0),
+                    '合計': int(row.get('合計', 0) or 0),
                 }
 
-            # 雜費統計計算
+            # 雜費統計
             expense_summary = {}
-            expense_categories = ['醫療', '看護費', '車資', '耗材', '其他', '農會購物', '退費']
 
-            for cat in expense_categories:
-                if cat == '退費':
-                    expense_summary[cat] = results.loc[results['類別'] == '沖銷', '費用'].sum()
-                else:
-                    expense_summary[cat] = results.loc[results['類別'] == cat, '費用'].sum()
+            medical = filtered[filtered["類別"] == "醫療"]
+            expense_summary["醫療"] = int(medical["費用"].fillna(0).sum())
+            expense_summary["看護費"] = int(medical["看護費"].fillna(0).sum())
+            expense_summary["車資"] = int(medical["車資"].fillna(0).sum())
 
-            expense_summary['雜費小計'] = sum(expense_summary[cat] for cat in expense_categories if cat != '退費')
-            expense_summary['雜費總計'] = expense_summary['雜費小計'] + expense_summary.get('退費', 0)
+            consumables = filtered[filtered["類別"] == "耗材"]
+            expense_summary["耗材"] = int(consumables["費用"].fillna(0).sum())
+
+            others = filtered[filtered["類別"] == "其他"]
+            expense_summary["其他"] = int(others["費用"].fillna(0).sum())
+
+            farmers = filtered[filtered["類別"] == "農會"]
+            expense_summary["農會購物"] = int(farmers["費用"].fillna(0).sum())
+
+            refund = filtered[filtered["類別"] == "沖銷"]
+            expense_summary["退費"] = int(refund["費用"].fillna(0).sum())
+
+            # 雜費小計與總計
+            expense_summary['雜費小計'] = int(
+                expense_summary["醫療"]
+                + expense_summary["耗材"]
+                + expense_summary["其他"]
+                + expense_summary["農會購物"]
+            )
+            expense_summary['雜費總計'] = expense_summary['雜費小計'] + expense_summary.get("退費", 0)
 
             custom_heading = '本月'
 
